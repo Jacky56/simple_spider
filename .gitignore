@@ -2,11 +2,14 @@
 __pycache__/
 *.py[cod]
 *$py.class
+website_printscreen/
+
 
 # C extensions
 *.so
 
 # Distribution / packaging
+**/*.png
 .Python
 build/
 develop-eggs/
