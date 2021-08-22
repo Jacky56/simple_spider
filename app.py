@@ -73,7 +73,7 @@ if __name__ == "__main__":
     # used to exclude urls thats ready been checked
     url_checked = set()
 
-    url_stack = ["https://www.pornhub.com"]
+    url_stack = ["https://www.4chan.org"]
     
     while url_stack and len(url_checked_count) < 1000:
         current_url = url_stack.pop()
@@ -81,13 +81,14 @@ if __name__ == "__main__":
         if not key in url_checked_count:
             url_checked_count[key] = 0
         url_checked_count[key] += 1
-        if url_checked_count[key] < 100 and not_domains(current_url) and (not current_url in url_checked):
+        if url_checked_count[key] < 20 and not_domains(current_url) and (not current_url in url_checked):
             try:
                 status, html = get_html(driver, current_url)
                 urls = get_urls(driver.current_url, html)
                 url_stack.extend(urls)
-                path_label = f"{PATH}/{status}/"
-                dump_printscreen(path_label, driver)
+                if status != 200:
+                    path_label = f"{PATH}/{status}/"
+                    dump_printscreen(path_label, driver)
             except Exception as e:
                 print(e)
                 driver = webdriver.Chrome(chrome_options=get_config())
