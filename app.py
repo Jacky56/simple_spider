@@ -7,9 +7,28 @@ from typing import *
 from datetime import datetime
 from urllib.parse import urlparse
 from pathlib import Path
+from fake_useragent import UserAgent
 
 PATH = "./website_printscreen/"
+ua = UserAgent()
 
+
+def not_domains(url: str) -> bool:
+    exclude_domains = set([
+        "google",
+        "youtube",
+        "facebook",
+        "amazon",
+        "yahoo",
+        "linkedin",
+        "microsoft",
+        "indeed",
+        "vertbaudet",
+        "twitter",
+        "stackoverflow"
+    ])
+    return not urlparse(url).netloc.split('.')[0] in exclude_domains
+    
 def get_config() -> Options:
     chrome_options = Options()
     chrome_options.add_argument("--disable-extensions")
@@ -29,7 +48,10 @@ def get_urls(url: str, html: str) -> List[str]:
     return list(urls)
 
 def get_html(driver: webdriver.Chrome, url: str) -> tuple:
-    status_code = requests.get(url).status_code
+    headers = {
+        'User-Agent': ua.random
+    }
+    status_code = requests.get(url, headers=headers).status_code
     driver.get(url)
     return status_code, driver.page_source
 
@@ -46,13 +68,20 @@ if __name__ == "__main__":
     chromedriver_autoinstaller.install()
     driver = webdriver.Chrome(chrome_options=get_config())
 
+    # used to count how many times domain was taken
+    url_checked_count = {}
+    # used to exclude urls thats ready been checked
     url_checked = set()
 
-    url_stack = ["https://www.py4u.net/discuss/196494"]
+    url_stack = ["https://www.pornhub.com"]
     
-    while url_stack and len(url_checked) < 1000:
+    while url_stack and len(url_checked_count) < 1000:
         current_url = url_stack.pop()
-        if not current_url in url_checked:
+        key = urlparse(current_url).netloc
+        if not key in url_checked_count:
+            url_checked_count[key] = 0
+        url_checked_count[key] += 1
+        if url_checked_count[key] < 100 and not_domains(current_url) and (not current_url in url_checked):
             try:
                 status, html = get_html(driver, current_url)
                 urls = get_urls(driver.current_url, html)
@@ -62,8 +91,7 @@ if __name__ == "__main__":
             except Exception as e:
                 print(e)
                 driver = webdriver.Chrome(chrome_options=get_config())
+
         url_checked.add(current_url)
 
     print("spider complete.")
-
-
